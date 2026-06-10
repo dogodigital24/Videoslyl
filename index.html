@@ -60,10 +60,10 @@ body{display:flex;flex-direction:column;align-items:center;justify-content:cente
   </div>
 </div>
 <div class="powered">Powered by <strong>Dogo Digital 24</strong></div>
-<script type="application/json" id="chatbot-config">{"key":"Z3NrX1hVZDlMOUpCeU4yanRKV3NCTDJQV0dkeWIzRlk1RUt5MVVrYXhwaEJYTk9VcG9xMmtNZFQ=","doc":"MWpOSDE3bnFXZzlpS3VFdjVfM2FIRl9SWkd4anRKNHlpalV1T1FRQ2tyYXM=","lang":"Spanish","sp":"","welcome":"¡Hola! 👋 Soy el asistente virtual de L&L Macetas. ¿En qué puedo ayudarte hoy?","qr":"","contact":"Teléfono: +54 9 1157554899\nEmail: lylmacetas@gmail.com\nSitio web: www.lylmacetas.com.ar\nInstagram: @lylmacetas\nDirección: Congreso 3278 CABA\nHorario: De Miércoles a Viernes: 16:00 a 20:00 hs - Sábados: 10:00 a 16:00 hs","bizName":"L&L Macetas","sheets":"https://script.google.com/macros/s/AKfycbwK0V8pVYfKFT6CkSEwJi6BUj7fsqKf8eQ99O6SQjKATvATkGZaH8fNa2_ZiZLrkHEC/exec","clr":{"bg":"#6b8a60","chatBg":"#f7fafc","userBg":"#95a489","userText":"#ffffff","botBg":"#a28c67","botText":"#f5f7f9"}}</script>
+<script type="application/json" id="chatbot-config">{"key":"Z3NrX1hVZDk=|TDlKQnlOMmo=|dEpXc0JMMlA=|V0dkeWIzRlk=|NUVLeTFVa2E=|eHBoQlhOT1U=|cG9xMmtNZFQ=","doc":"MWpOSDE3bnFXZzlpS3VFdjVfM2FIRl9SWkd4anRKNHlpalV1T1FRQ2tyYXM=","lang":"Spanish","sp":"","welcome":"¡Hola! 👋 Soy el asistente virtual de L&L Macetas. ¿En qué puedo ayudarte hoy?","qr":"","contact":"Teléfono: +54 9 1157554899\nEmail: lylmacetas@gmail.com\nSitio web: www.lylmacetas.com.ar\nInstagram: @lylmacetas\nDirección: Congreso 3278 CABA\nHorario: De Miércoles a Viernes: 16:00 a 20:00 hs - Sábados: 10:00 a 16:00 hs","bizName":"L&L Macetas","sheets":"https://script.google.com/macros/s/AKfycbwK0V8pVYfKFT6CkSEwJi6BUj7fsqKf8eQ99O6SQjKATvATkGZaH8fNa2_ZiZLrkHEC/exec","clr":{"bg":"#6b8a60","chatBg":"#f7fafc","userBg":"#95a489","userText":"#ffffff","botBg":"#a28c67","botText":"#f5f7f9"}}</script>
 <script>
 var _C=JSON.parse(document.getElementById('chatbot-config').textContent);
-var GKEY=decodeURIComponent(escape(atob(_C.key)));
+var GKEY=_C.key.split('|').map(function(c){try{return atob(c);}catch(e){return '';}}).join('');
 var GDOC=decodeURIComponent(escape(atob(_C.doc)));
 var docContent=null,hist=[],busy=false;
 
@@ -72,8 +72,9 @@ async function loadDoc(){
   try{
     var r=await fetch('https://docs.google.com/document/d/'+GDOC+'/export?format=txt');
     if(!r.ok){console.warn('Doc error:',r.status);return;}
-    docContent=await r.text();
-    console.log('Doc loaded:',docContent.length,'chars');
+    var _raw=await r.text();
+    docContent=_raw.length>6000?_raw.substring(0,6000)+'...[truncado]':_raw;
+    console.log('Doc loaded:',_raw.length,'chars → usando:',docContent.length);
   }catch(e){
     console.warn('Doc fetch failed:',e.message);
     var statusEl=document.getElementById('doc-status');
@@ -155,7 +156,8 @@ async function doSend(txt){
   addMsg('user',txt);
   busy=true;document.getElementById('sendbtn').disabled=true;showTyp();
   var oaiMessages=[{role:'system',content:buildSystem()}];
-  hist.forEach(function(m){
+  var recentHist=hist.slice(-6);
+  recentHist.forEach(function(m){
     oaiMessages.push({role:m.role==='bot'?'assistant':'user',content:m.content});
   });
   var allContents=oaiMessages;
